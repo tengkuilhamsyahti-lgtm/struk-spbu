@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f766e">
+<title>Kasir Struk SPBU</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--text:#1f2933;--muted:#6b7280;--line:#d6dbe1;--accent:#0f766e;--accent-2:#115e59;--paper:#fff;--ink:#111}
+@media (prefers-color-scheme:dark){:root{--bg:#111518;--card:#1b2126;--text:#e5e7eb;--muted:#9ca3af;--line:#30383f;--accent:#14b8a6;--accent-2:#0d9488}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:14px 16px;background:var(--accent);color:#fff}
+header h1{margin:0;font-size:18px}
+header p{margin:2px 0 0;font-size:13px;opacity:.85}
+main{display:grid;gap:16px;padding:16px;max-width:1100px;margin:auto}
+@media(min-width:860px){main{grid-template-columns:1fr 360px;align-items:start}.preview-wrap{position:sticky;top:16px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card h2{font-size:14px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.grid{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+.full{grid-column:1/-1}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+input,select,textarea{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+textarea{resize:vertical;min-height:52px}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;color:var(--text);padding:9px;font:inherit;cursor:pointer}
+.seg button.on{background:var(--accent);color:#fff}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{border:0;border-radius:8px;padding:11px 14px;font:inherit;font-weight:600;cursor:pointer;background:var(--accent);color:#fff}
+.btn:hover{background:var(--accent-2)}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.sum{margin-top:10px;font-size:14px;color:var(--muted)}
+.sum b{color:var(--text)}
+details summary{cursor:pointer;font-weight:600;font-size:14px}
+.prices{display:grid;gap:8px;grid-template-columns:1fr 1fr;margin-top:10px}
+.preview-wrap .card{display:flex;flex-direction:column;align-items:center;background:#e5e7eb}
+@media (prefers-color-scheme:dark){.preview-wrap .card{background:#2a3137}}
+#receipt{background:var(--paper);color:var(--ink);font:12px/1.35 "Courier New",ui-monospace,monospace;padding:10px 8px;box-shadow:0 2px 10px rgba(0,0,0,.18);white-space:pre;overflow:hidden}
+#receipt.w58{width:58mm;padding:3mm 2mm;font-size:2.75mm}
+#receipt.w80{width:80mm;padding:3mm 2mm;font-size:2.6mm}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#111;color:#fff;padding:9px 14px;border-radius:8px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;max-width:90vw}
+#toast.show{opacity:1}
+.hist{font-size:13px;max-height:220px;overflow:auto}
+.hist div{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer}
+@media print{
+  @page{margin:0;size:var(--page-w,58mm) auto}
+  body{background:#fff}
+  header,.no-print,.form-col,#toast{display:none!important}
+  main{display:block;padding:0;margin:0}
+  .preview-wrap .card{background:#fff;border:0;padding:0;align-items:flex-start}
+  #receipt{box-shadow:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Kasir Struk SPBU</h1>
+  <p>Isi transaksi, cek pratinjau, lalu cetak ke printer thermal 58/80 mm.</p>
+</header>
+
+<main>
+  <section class="form-col">
+    <div class="card">
+      <h2>Data SPBU (tersimpan otomatis)</h2>
+      <div class="grid">
+        <label class="full">Nama SPBU<input id="sNama" value="SPBU 00.000.00"></label>
+        <label>No. SPBU<input id="sNo" value="00.000.00"></label>
+        <label>Telepon<input id="sTelp" placeholder="opsional"></label>
+        <label class="full">Alamat<textarea id="sAlamat">Jl. Contoh No. 1, Kota</textarea></label>
+        <label class="full">Pesan penutup<input id="sFooter" value="Terima kasih & selamat jalan"></label>
+      </div>
+      <details style="margin-top:12px">
+        <summary>Harga BBM per liter</summary>
+        <div class="prices" id="priceList"></div>
+      </details>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Transaksi</h2>
+      <div class="grid">
+        <label>No. Transaksi<input id="tNo"></label>
+        <label>Tanggal & jam<input id="tWaktu" type="datetime-local"></label>
+        <label>No. Pompa<input id="tPompa" value="1" inputmode="numeric"></label>
+        <label>Operator<input id="tOperator" placeholder="nama operator"></label>
+        <label>Jenis BBM<select id="tBbm"></select></label>
+        <label>Harga/Liter (Rp)<input id="tHarga" inputmode="numeric"></label>
+        <div class="full">
+          <div class="seg" id="mode">
+            <button type="button" data-m="nominal" class="on">Isi per Rupiah</button>
+            <button type="button" data-m="volume">Isi per Liter</button>
+          </div>
+        </div>
+        <label id="lNominal">Nominal (Rp)<input id="tNominal" inputmode="numeric" value="50000"></label>
+        <label id="lVolume" style="display:none">Volume (Liter)<input id="tVolume" inputmode="decimal" value="5"></label>
+        <label>Plat Nomor<input id="tPlat" placeholder="BK 1234 AB" style="text-transform:uppercase"></label>
+        <label>Metode Bayar<select id="tBayar"><option>Tunai</option><option>QRIS</option><option>Debit</option><option>Kartu Kredit</option><option>Voucher</option></select></label>
+        <label id="lTunai">Uang Diterima (Rp)<input id="tTunai" inputmode="numeric" placeholder="kosongkan jika pas"></label>
+        <label>Ukuran kertas<select id="tKertas"><option value="58">58 mm</option><option value="80">80 mm</option></select></label>
+      </div>
+      <div class="sum" id="sum"></div>
+      <div class="btns">
+        <button class="btn" id="btnPrint">Cetak</button>
+        <button class="btn ghost" id="btnBt">Cetak via Bluetooth</button>
+        <button class="btn ghost" id="btnNew">Transaksi Baru</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h2>Riwayat (di perangkat ini)</h2>
+      <div class="hist" id="hist"><span style="color:var(--muted)">Belum ada transaksi.</span></div>
+    </div>
+  </section>
+
+  <section class="preview-wrap">
+    <div class="card"><pre id="receipt" class="w58"></pre></div>
+  </section>
+</main>
+<div id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
+};
+const DEFAULT_PRICES = { "Pertalite":10000, "Pertamax":12500, "Pertamax Turbo":13700, "Pertamina Dex":13600, "Dexlite":12900, "Biosolar":6800 };
+let prices = store.get("spbu_prices", DEFAULT_PRICES);
+let mode = "nominal";
+let lastLines = [];
+
+const stationFields = ["sNama","sNo","sTelp","sAlamat","sFooter"];
+const saved = store.get("spbu_station", null);
+if (saved) stationFields.forEach(f => { if (saved[f] != null) $(f).value = saved[f] });
+const opSaved = store.get("spbu_operator", "");
+if (opSaved) $("tOperator").value = opSaved;
+const paperSaved = store.get("spbu_paper", "58");
+$("tKertas").value = paperSaved;
+
+function renderPrices(){
+  const sel = $("tBbm"), cur = sel.value;
+  sel.innerHTML = Object.keys(prices).map(n => `<option>${n}</option>`).join("");
+  if (cur && prices[cur] != null) sel.value = cur;
+  $("priceList").innerHTML = Object.entries(prices).map(([n,p]) =>
+    `<label>${n}<input data-bbm="${n}" inputmode="numeric" value="${p}"></label>`).join("") +
+    `<button type="button" class="btn ghost full" id="resetPrice" style="grid-column:1/-1">Kembalikan harga bawaan</button>`;
+  $("priceList").querySelectorAll("input").forEach(i => i.addEventListener("input", () => {
+    prices[i.dataset.bbm] = num(i.value); store.set("spbu_prices", prices);
+    if ($("tBbm").value === i.dataset.bbm) $("tHarga").value = prices[i.dataset.bbm];
+    update();
+  }));
+  $("resetPrice").onclick = () => { prices = {...DEFAULT_PRICES}; store.set("spbu_prices", prices); renderPrices(); $("tHarga").value = prices[$("tBbm").value]; update(); };
+}
+
+const num = s => { const n = parseFloat(String(s).replace(/\./g,"").replace(",", ".").replace(/[^\d.]/g,"")); return isNaN(n) ? 0 : n };
+const dec = s => { const n = parseFloat(String(s).replace(",", ".").replace(/[^\d.]/g,"")); return isNaN(n) ? 0 : n };
+const rp = n => "Rp " + Math.round(n).toLocaleString("id-ID");
+const pad2 = n => String(n).padStart(2,"0");
+
+function nowLocal(){ const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}` }
+function nextTrxNo(){
+  const d = new Date(), key = `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}`;
+  const c = store.get("spbu_counter", {});
+  return `${key}-${String((c[key]||0)+1).padStart(4,"0")}`;
+}
+function bumpCounter(no){
+  const [key, seq] = no.split("-"); if (!seq) return;
+  const c = store.get("spbu_counter", {}); c[key] = Math.max(c[key]||0, parseInt(seq,10)||0); store.set("spbu_counter", c);
+}
+
+function calc(){
+  const harga = num($("tHarga").value);
+  let volume, total;
+  if (mode === "nominal"){ total = num($("tNominal").value); volume = harga ? total / harga : 0 }
+  else { volume = dec($("tVolume").value); total = Math.round(volume * harga) }
+  const tunai = $("tBayar").value === "Tunai" ? (num($("tTunai").value) || total) : total;
+  return { harga, volume, total, tunai, kembali: Math.max(0, tunai - total) };
+}
+
+function wrap(text, w){
+  const out = [];
+  String(text).split("\n").forEach(par => {
+    let line = "";
+    par.split(/\s+/).forEach(word => {
+      while (word.length > w){ if (line){ out.push(line); line = "" } out.push(word.slice(0,w)); word = word.slice(w) }
+      if (!line) line = word; else if ((line + " " + word).length <= w) line += " " + word; else { out.push(line); line = word }
+    });
+    out.push(line);
+  });
+  return out;
+}
+const center = (s, w) => { s = s.slice(0,w); const l = Math.floor((w - s.length)/2); return " ".repeat(l) + s };
+const lr = (l, r, w) => { const sp = w - l.length - r.length; return sp >= 1 ? l + " ".repeat(sp) + r : l + "\n" + " ".repeat(Math.max(0, w - r.length)) + r };
+
+function buildLines(){
+  const w = $("tKertas").value === "80" ? 48 : 32;
+  const c = calc();
+  const dt = $("tWaktu").value ? new Date($("tWaktu").value) : new Date();
+  const tgl = `${pad2(dt.getDate())}/${pad2(dt.getMonth()+1)}/${dt.getFullYear()}`;
+  const jam = `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`;
+  const dash = "-".repeat(w);
+  const L = [];
+  wrap($("sNama").value.toUpperCase(), w).forEach(s => L.push({t:center(s,w), b:true}));
+  wrap($("sAlamat").value, w).forEach(s => L.push({t:center(s,w)}));
+  if ($("sTelp").value.trim()) L.push({t:center("Telp. " + $("sTelp").value.trim(), w)});
+  L.push({t:dash});
+  L.push({t:lr("No. SPBU", $("sNo").value, w)});
+  L.push({t:lr("No. Trans", $("tNo").value, w)});
+  L.push({t:lr("Waktu", `${tgl} ${jam}`, w)});
+  L.push({t:lr("Pompa", $("tPompa").value, w)});
+  if ($("tOperator").value.trim()) L.push({t:lr("Operator", $("tOperator").value.trim(), w)});
+  if ($("tPlat").value.trim()) L.push({t:lr("No. Plat", $("tPlat").value.trim().toUpperCase(), w)});
+  L.push({t:dash});
+  L.push({t:lr("Produk", $("tBbm").value, w)});
+  L.push({t:lr("Harga/L", rp(c.harga), w)});
+  L.push({t:lr("Volume", c.volume.toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2}) + " L", w)});
+  L.push({t:dash});
+  L.push({t:lr("TOTAL", rp(c.total), w), b:true});
+  L.push({t:lr($("tBayar").value, rp(c.tunai), w)});
+  if ($("tBayar").value === "Tunai") L.push({t:lr("Kembali", rp(c.kembali), w)});
+  L.push({t:dash});
+  wrap($("sFooter").value, w).forEach(s => L.push({t:center(s,w)}));
+  L.push({t:""});
+  return L;
+}
+
+function update(){
+  const k = $("tKertas").value;
+  const r = $("receipt");
+  r.className = "w" + k;
+  document.documentElement.style.setProperty("--page-w", k + "mm");
+  lastLines = buildLines();
+  r.innerHTML = lastLines.map(l => {
+    const esc = l.t.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+    return l.b ? `<b>${esc}</b>` : esc;
+  }).join("\n");
+  const c = calc();
+  $("sum").innerHTML = `Volume <b>${c.volume.toFixed(2)} L</b> · Total <b>${rp(c.total)}</b>` + ($("tBayar").value==="Tunai" ? ` · Kembali <b>${rp(c.kembali)}</b>` : "");
+  $("lTunai").style.display = $("tBayar").value === "Tunai" ? "" : "none";
+  store.set("spbu_station", Object.fromEntries(stationFields.map(f => [f, $(f).value])));
+  store.set("spbu_operator", $("tOperator").value);
+  store.set("spbu_paper", k);
+}
+
+function toast(msg){ const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2600) }
+
+function saveHistory(){
+  const c = calc();
+  const h = store.get("spbu_history", []);
+  const no = $("tNo").value;
+  const entry = { no, waktu:$("tWaktu").value, bbm:$("tBbm").value, harga:c.harga, volume:c.volume, total:c.total,
+    pompa:$("tPompa").value, plat:$("tPlat").value, bayar:$("tBayar").value, tunai:$("tTunai").value, mode,
+    nominal:$("tNominal").value, vol:$("tVolume").value };
+  const i = h.findIndex(x => x.no === no); if (i >= 0) h[i] = entry; else h.unshift(entry);
+  store.set("spbu_history", h.slice(0, 100));
+  bumpCounter(no);
+  renderHistory();
+}
+function renderHistory(){
+  const h = store.get("spbu_history", []);
+  if (!h.length) return;
+  $("hist").innerHTML = h.map((x,i) => `<div data-i="${i}"><span>${x.no} · ${x.bbm} ${x.volume.toFixed(2)} L</span><b>${rp(x.total)}</b></div>`).join("");
+  $("hist").querySelectorAll("div").forEach(d => d.onclick = () => {
+    const x = h[d.dataset.i];
+    $("tNo").value = x.no; $("tWaktu").value = x.waktu; $("tBbm").value = x.bbm; $("tHarga").value = x.harga;
+    $("tPompa").value = x.pompa; $("tPlat").value = x.plat; $("tBayar").value = x.bayar; $("tTunai").value = x.tunai || "";
+    $("tNominal").value = x.nominal; $("tVolume").value = x.vol; setMode(x.mode);
+    toast("Transaksi " + x.no + " dimuat, bisa dicetak ulang");
+  });
+}
+
+function setMode(m){
+  mode = m;
+  $("mode").querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.m === m));
+  $("lNominal").style.display = m === "nominal" ? "" : "none";
+  $("lVolume").style.display = m === "volume" ? "" : "none";
+  update();
+}
+
+function newTrx(){
+  $("tNo").value = nextTrxNo(); $("tWaktu").value = nowLocal(); $("tPlat").value = ""; $("tTunai").value = "";
+  update();
+}
+
+/* ---------- Bluetooth ESC/POS (Chrome Android / desktop) ---------- */
+let btChar = null;
+const BT_SERVICES = ["000018f0-0000-1000-8000-00805f9b34fb","0000ff00-0000-1000-8000-00805f9b34fb","49535343-fe7d-4ae5-8fa9-9fafd205e455","e7810a71-73ae-499d-8c15-faa9aef0c3f2"];
+async function getPrinter(){
+  if (btChar) return btChar;
+  if (!navigator.bluetooth) throw new Error("Browser ini belum mendukung Bluetooth. Pakai Chrome di Android, atau tombol Cetak biasa.");
+  const dev = await navigator.bluetooth.requestDevice({ acceptAllDevices:true, optionalServices:BT_SERVICES });
+  const server = await dev.gatt.connect();
+  for (const s of await server.getPrimaryServices()){
+    for (const ch of await s.getCharacteristics()){
+      if (ch.properties.write || ch.properties.writeWithoutResponse){ btChar = ch; dev.addEventListener("gattserverdisconnected", () => btChar = null); return ch }
+    }
+  }
+  throw new Error("Printer tidak punya jalur tulis yang dikenali.");
+}
+function escpos(lines){
+  const b = [0x1b,0x40, 0x1b,0x61,0x00];
+  const enc = s => Array.from(s).map(ch => { const c = ch.charCodeAt(0); return c < 128 ? c : 0x3f });
+  lines.forEach(l => {
+    if (l.b) b.push(0x1b,0x45,0x01);
+    b.push(...enc(l.t), 0x0a);
+    if (l.b) b.push(0x1b,0x45,0x00);
+  });
+  b.push(0x0a,0x0a,0x0a, 0x1d,0x56,0x42,0x00);
+  return new Uint8Array(b);
+}
+async function printBt(){
+  try{
+    const ch = await getPrinter();
+    const data = escpos(lastLines);
+    for (let i = 0; i < data.length; i += 100){
+      const part = data.slice(i, i + 100);
+      if (ch.properties.writeWithoutResponse) await ch.writeValueWithoutResponse(part); else await ch.writeValue(part);
+      await new Promise(r => setTimeout(r, 20));
+    }
+    saveHistory(); toast("Struk terkirim ke printer");
+  }catch(e){ btChar = null; if (e.name !== "NotFoundError") toast(e.message || "Gagal mencetak via Bluetooth") }
+}
+
+/* ---------- events ---------- */
+document.querySelectorAll("input,select,textarea").forEach(el => el.addEventListener("input", update));
+$("tBbm").addEventListener("change", () => { $("tHarga").value = prices[$("tBbm").value] || 0; update() });
+$("mode").querySelectorAll("button").forEach(b => b.onclick = () => setMode(b.dataset.m));
+$("btnPrint").onclick = () => { update(); saveHistory(); window.print() };
+$("btnBt").onclick = printBt;
+$("btnNew").onclick = newTrx;
+
+renderPrices();
+$("tHarga").value = prices[$("tBbm").value];
+renderHistory();
+newTrx();
+</script>
+</body>
+</html>
