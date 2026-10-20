@@ -6,6 +6,8 @@ Buka lewat browser (Chrome Android atau PC), tidak perlu instal:
 https://tengkuilhamsyahti-lgtm.github.io/struk-spbu/
 
 ## Fitur
+- Tombol Terapkan untuk memeriksa struk dulu, baru bisa dicetak
+- Bisa dipasang di HP Android (Tambahkan ke layar utama) dan tetap jalan tanpa internet
 - Data usaha tersimpan otomatis di perangkat
 - Edit langsung di struk (ketuk teks pratinjau), lalu kembalikan ke otomatis kapan saja
 - Teks tambahan di bawah alamat, catatan transaksi, dan tulisan bawah struk bisa diubah

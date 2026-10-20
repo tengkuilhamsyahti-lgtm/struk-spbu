@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Kasir Struk SPBU</title>
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--text:#1f2933;--muted:#6b7280;--line:#d6dbe1;--accent:#0f766e;--accent-2:#115e59;--paper:#fff;--ink:#111}
@@ -54,9 +57,17 @@ details summary{cursor:pointer;font-weight:600;font-size:14px}
 #toast.show{opacity:1}
 .hist{font-size:13px;max-height:220px;overflow:auto}
 .hist div{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.review-bar{display:none}
+body.review .form-col{display:none}
+body.review main{grid-template-columns:1fr;max-width:520px}
+body.review .preview-wrap{position:static}
+body.review .review-bar{display:flex;gap:8px;position:sticky;bottom:0;z-index:5;background:var(--bg);padding:12px 0 calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+body.review .review-bar .btn{flex:1;padding:14px}
+.review-title{display:none;margin:0 0 10px;font-size:15px;font-weight:600;text-align:center}
+body.review .review-title{display:block}
 @media print{
   body{background:#fff}
-  header,.no-print,.form-col,#toast{display:none!important}
+  header,.no-print,.form-col,#toast,.review-bar,.review-title{display:none!important}
   main{display:block;padding:0;margin:0}
   .preview-wrap .card{background:#fff;border:0;padding:0;align-items:flex-start}
   #receipt{box-shadow:none}
@@ -152,7 +163,7 @@ details summary{cursor:pointer;font-weight:600;font-size:14px}
       </div>
       <div class="sum" id="sum"></div>
       <div class="btns">
-        <button class="btn" id="btnPrint">Cetak</button>
+        <button class="btn" id="btnApply">Terapkan</button>
         <button class="btn ghost" id="btnNew">Transaksi Baru</button>
       </div>
     </div>
@@ -164,7 +175,9 @@ details summary{cursor:pointer;font-weight:600;font-size:14px}
   </section>
 
   <section class="preview-wrap">
+    <p class="review-title">Periksa struk. Kalau sudah cocok, tekan Cetak.</p>
     <div class="card"><div class="edit-bar"><button type="button" class="btn small" id="btnEdit">Edit langsung di struk</button><button type="button" class="btn ghost small" id="btnAuto" hidden>Kembalikan otomatis</button></div><p class="edit-note" id="editNote" hidden></p><div id="receipt"><img id="rLogo" alt="" hidden><pre id="rText"></pre></div></div>
+    <div class="review-bar"><button type="button" class="btn ghost" id="btnBack">Ubah lagi</button><button type="button" class="btn" id="btnPrint">Cetak</button></div>
   </section>
 </main>
 <div id="toast"></div>
@@ -573,7 +586,21 @@ document.querySelectorAll(".form-col input:not([type=file]),.form-col select,.fo
 $("cCut").addEventListener("change", () => { readCfg(); update() });
 $("tBbm").addEventListener("change", () => { $("tHarga").value = prices[$("tBbm").value] || 0; update() });
 $("mode").querySelectorAll("button").forEach(b => b.onclick = () => setMode(b.dataset.m));
-$("btnPrint").onclick = () => { if (editing) setEditing(false); update(); doPrint(lastLines, false) };
+// Terapkan: kunci isi struk dan tampilkan pratinjau penuh. Cetak hanya tersedia di layar ini.
+function setReview(on){
+  if (editing) setEditing(false);
+  update();
+  document.body.classList.toggle("review", on);
+  window.scrollTo(0, 0);
+}
+$("btnApply").onclick = () => setReview(true);
+$("btnBack").onclick = () => setReview(false);
+$("btnPrint").onclick = () => {
+  if (!document.body.classList.contains("review")) return setReview(true);
+  if (editing) setEditing(false);
+  update(); doPrint(lastLines, false);
+};
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
 $("btnTest").onclick = () => {
   if (cfg.method === "bt") return doPrint(testLines(), true);
   lastLines = testLines();
