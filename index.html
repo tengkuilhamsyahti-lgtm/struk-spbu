@@ -46,7 +46,10 @@ details summary{cursor:pointer;font-weight:600;font-size:14px}
 @media (prefers-color-scheme:dark){.preview-wrap .card{background:#2a3137}}
 #receipt{background:var(--paper);color:var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden}
 #rLogo{display:block;margin:0 auto 1.5mm;image-rendering:pixelated}
-#rText{margin:0;font-family:"Courier New",ui-monospace,monospace;line-height:1.35;white-space:pre;color:var(--ink)}
+#rText{margin:0;font-family:"Courier New",ui-monospace,monospace;line-height:1.35;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink);outline:none}
+#rText[contenteditable]{background:#fffbe6;box-shadow:0 0 0 2px #f59e0b}
+.edit-bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:12px;width:100%}
+.edit-note{font-size:12px;color:var(--muted);text-align:center;margin:0 0 10px}
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#111;color:#fff;padding:9px 14px;border-radius:8px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;max-width:90vw}
 #toast.show{opacity:1}
 .hist{font-size:13px;max-height:220px;overflow:auto}
@@ -57,6 +60,8 @@ details summary{cursor:pointer;font-weight:600;font-size:14px}
   main{display:block;padding:0;margin:0}
   .preview-wrap .card{background:#fff;border:0;padding:0;align-items:flex-start}
   #receipt{box-shadow:none}
+  .edit-bar,.edit-note{display:none!important}
+  #rText[contenteditable]{background:none;box-shadow:none}
 }
 </style>
 <style id="pageStyle"></style>
@@ -76,7 +81,8 @@ details summary{cursor:pointer;font-weight:600;font-size:14px}
         <label>No. SPBU / ID<input id="sNo" placeholder="opsional"></label>
         <label>Telepon<input id="sTelp" placeholder="opsional"></label>
         <label class="full">Alamat<textarea id="sAlamat">Jl. Contoh No. 1, Kota</textarea></label>
-        <label class="full">Pesan penutup<textarea id="sFooter">Terima kasih & selamat jalan</textarea></label>
+        <label class="full">Teks tambahan di bawah alamat<textarea id="sHeadExtra" placeholder="opsional, misal: Buka 24 jam"></textarea></label>
+        <label class="full">Tulisan bawah struk (ucapan terima kasih)<textarea id="sFooter">Terima kasih & selamat jalan</textarea></label>
       </div>
       <details style="margin-top:12px">
         <summary>Harga BBM per liter</summary>
@@ -142,6 +148,7 @@ details summary{cursor:pointer;font-weight:600;font-size:14px}
         <label>Plat Nomor<input id="tPlat" placeholder="BK 1234 AB" style="text-transform:uppercase"></label>
         <label>Metode Bayar<select id="tBayar"><option>Tunai</option><option>QRIS</option><option>Debit</option><option>Kartu Kredit</option><option>Voucher</option></select></label>
         <label id="lTunai">Uang Diterima (Rp)<input id="tTunai" inputmode="numeric" placeholder="kosongkan jika pas"></label>
+        <label class="full">Catatan transaksi<textarea id="tCatatan" placeholder="opsional, dicetak di atas tulisan bawah struk"></textarea></label>
       </div>
       <div class="sum" id="sum"></div>
       <div class="btns">
@@ -157,7 +164,7 @@ details summary{cursor:pointer;font-weight:600;font-size:14px}
   </section>
 
   <section class="preview-wrap">
-    <div class="card"><div id="receipt"><img id="rLogo" alt="" hidden><pre id="rText"></pre></div></div>
+    <div class="card"><div class="edit-bar"><button type="button" class="btn small" id="btnEdit">Edit langsung di struk</button><button type="button" class="btn ghost small" id="btnAuto" hidden>Kembalikan otomatis</button></div><p class="edit-note" id="editNote" hidden></p><div id="receipt"><img id="rLogo" alt="" hidden><pre id="rText"></pre></div></div>
   </section>
 </main>
 <div id="toast"></div>
@@ -176,9 +183,11 @@ const oldPaper = store.get("spbu_paper", null);
 if (oldPaper && !store.get("spbu_cfg", null)) cfg.paper = oldPaper;
 let mode = "nominal";
 let lastLines = [];
+let manualText = null;   // teks struk hasil edit langsung; null = otomatis dari form
+let editing = false;
 const logoImg = new Image();
 
-const stationFields = ["sNama","sNo","sTelp","sAlamat","sFooter"];
+const stationFields = ["sNama","sNo","sTelp","sAlamat","sHeadExtra","sFooter"];
 function loadStation(){
   const saved = store.get("spbu_station", null);
   if (saved) stationFields.forEach(f => { if (saved[f] != null) $(f).value = saved[f] });
@@ -359,6 +368,7 @@ function buildLines(){
   wrap($("sNama").value.toUpperCase(), w).forEach(s => add(center(s,w), true));
   wrap($("sAlamat").value, w).forEach(s => add(center(s,w)));
   if ($("sTelp").value.trim()) add(center("Telp. " + $("sTelp").value.trim(), w));
+  if ($("sHeadExtra").value.trim()) wrap($("sHeadExtra").value.trim(), w).forEach(s => add(center(s,w)));
   add(dash);
   if ($("sNo").value.trim()) add(lr("No. SPBU", $("sNo").value.trim(), w));
   add(lr("No. Trans", $("tNo").value, w));
@@ -376,6 +386,7 @@ function buildLines(){
   add(lr($("tBayar").value, rp(c.tunai), w));
   if ($("tBayar").value === "Tunai") add(lr("Kembali", rp(c.kembali), w));
   add(dash);
+  if ($("tCatatan").value.trim()){ wrap($("tCatatan").value.trim(), w).forEach(s => add(s)); add(dash) }
   wrap($("sFooter").value, w).forEach(s => add(center(s,w)));
   return L;
 }
@@ -390,17 +401,55 @@ function update(){
   $("rLogo").style.width = cfg.logoW + "%";
   $("pageStyle").textContent = `@media print{@page{size:${pw}mm auto;margin:0}}`;
   $("lPaperW").style.display = cfg.paper === "custom" ? "" : "none";
-  lastLines = buildLines();
-  $("rText").innerHTML = lastLines.map(l => {
-    const esc = l.t.replace(/&/g,"&amp;").replace(/</g,"&lt;");
-    return l.b ? `<b>${esc}</b>` : esc;
-  }).join("\n");
+  if (manualText != null){
+    lastLines = manualLines(manualText, w);
+    if (!editing && $("rText").innerText !== manualText) $("rText").textContent = manualText;
+  } else {
+    lastLines = buildLines();
+    $("rText").innerHTML = lastLines.map(l => {
+      const esc = l.t.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+      return l.b ? `<b>${esc}</b>` : esc;
+    }).join("\n");
+  }
+  $("btnAuto").hidden = manualText == null;
+  $("editNote").hidden = manualText == null;
+  $("editNote").textContent = editing ? "Ketuk teks struk untuk mengubahnya, lalu tekan Selesai edit." : "Struk memakai hasil edit manual. Perubahan di form tidak dipakai sampai Anda tekan Kembalikan otomatis.";
   const c = calc();
   $("sum").innerHTML = `Volume <b>${c.volume.toFixed(2)} L</b> · Total <b>${rp(c.total)}</b>` + ($("tBayar").value==="Tunai" ? ` · Kembali <b>${rp(c.kembali)}</b>` : "");
   $("lTunai").style.display = $("tBayar").value === "Tunai" ? "" : "none";
   store.set("spbu_station", Object.fromEntries(stationFields.map(f => [f, $(f).value])));
   store.set("spbu_operator", $("tOperator").value);
 }
+
+function manualLines(text, w){
+  // baris yang lebih panjang dari kertas dipecah supaya printer Bluetooth tidak berantakan
+  const out = [];
+  text.replace(/\r/g,"").replace(/\n$/,"").split("\n").forEach(line => {
+    if (line.length <= w) out.push({t:line});
+    else wrap(line, w).forEach(t => out.push({t}));
+  });
+  return out;
+}
+function setEditing(on){
+  editing = on;
+  const r = $("rText");
+  if (on){
+    if (manualText == null) manualText = lastLines.map(l => l.t).join("\n");
+    r.textContent = manualText;
+    try{ r.contentEditable = "plaintext-only" }catch(e){}
+    if (r.contentEditable !== "plaintext-only") r.contentEditable = "true";
+    r.focus();
+  } else {
+    r.removeAttribute("contenteditable");
+    manualText = r.innerText.replace(/\u00a0/g," ");
+  }
+  $("btnEdit").textContent = on ? "Selesai edit" : "Edit langsung di struk";
+  update();
+}
+$("btnEdit").onclick = () => setEditing(!editing);
+$("btnAuto").onclick = () => { editing && setEditing(false); manualText = null; update(); toast("Struk kembali mengikuti isi form") };
+$("rText").addEventListener("input", () => { if (editing){ manualText = $("rText").innerText.replace(/\u00a0/g," "); lastLines = manualLines(manualText, cols()) } });
+$("rText").addEventListener("paste", e => { if (!editing) return; e.preventDefault(); document.execCommand("insertText", false, (e.clipboardData || window.clipboardData).getData("text")) });
 
 function toast(msg){ const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2600) }
 
@@ -410,7 +459,7 @@ function saveHistory(){
   const no = $("tNo").value;
   const entry = { no, waktu:$("tWaktu").value, bbm:$("tBbm").value, harga:c.harga, volume:c.volume, total:c.total,
     shift:$("tShift").value, pompa:$("tPompa").value, plat:$("tPlat").value, bayar:$("tBayar").value, tunai:$("tTunai").value, mode,
-    nominal:$("tNominal").value, vol:$("tVolume").value };
+    nominal:$("tNominal").value, vol:$("tVolume").value, catatan:$("tCatatan").value, manual:manualText };
   const i = h.findIndex(x => x.no === no); if (i >= 0) h[i] = entry; else h.unshift(entry);
   store.set("spbu_history", h.slice(0, 100));
   bumpCounter(no);
@@ -424,6 +473,7 @@ function renderHistory(){
     const x = h[d.dataset.i];
     $("tNo").value = x.no; $("tWaktu").value = x.waktu; $("tBbm").value = x.bbm; $("tHarga").value = x.harga;
     $("tShift").value = x.shift || ""; $("tPompa").value = x.pompa; $("tPlat").value = x.plat; $("tBayar").value = x.bayar; $("tTunai").value = x.tunai || "";
+    $("tCatatan").value = x.catatan || ""; if (editing) setEditing(false); manualText = x.manual ?? null;
     $("tNominal").value = x.nominal; $("tVolume").value = x.vol; setMode(x.mode);
     toast("Transaksi " + x.no + " dimuat, bisa dicetak ulang");
   });
@@ -438,7 +488,9 @@ function setMode(m){
 }
 
 function newTrx(){
-  $("tNo").value = nextTrxNo(); $("tWaktu").value = nowLocal(); $("tPlat").value = ""; $("tTunai").value = "";
+  if (editing) setEditing(false);
+  manualText = null;
+  $("tNo").value = nextTrxNo(); $("tWaktu").value = nowLocal(); $("tPlat").value = ""; $("tTunai").value = ""; $("tCatatan").value = "";
   update();
 }
 
@@ -521,12 +573,12 @@ document.querySelectorAll(".form-col input:not([type=file]),.form-col select,.fo
 $("cCut").addEventListener("change", () => { readCfg(); update() });
 $("tBbm").addEventListener("change", () => { $("tHarga").value = prices[$("tBbm").value] || 0; update() });
 $("mode").querySelectorAll("button").forEach(b => b.onclick = () => setMode(b.dataset.m));
-$("btnPrint").onclick = () => { update(); doPrint(lastLines, false) };
+$("btnPrint").onclick = () => { if (editing) setEditing(false); update(); doPrint(lastLines, false) };
 $("btnTest").onclick = () => {
   if (cfg.method === "bt") return doPrint(testLines(), true);
   lastLines = testLines();
   $("rText").innerHTML = lastLines.map(l => l.t).join("\n");
-  window.print(); update();
+  window.print(); if (manualText != null) $("rText").textContent = manualText; update();
 };
 $("btnBtForget").onclick = () => {
   try{ if (btDev && btDev.gatt.connected) btDev.gatt.disconnect() }catch(e){}

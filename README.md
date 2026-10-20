@@ -7,6 +7,8 @@ https://tengkuilhamsyahti-lgtm.github.io/struk-spbu/
 
 ## Fitur
 - Data usaha tersimpan otomatis di perangkat
+- Edit langsung di struk (ketuk teks pratinjau), lalu kembalikan ke otomatis kapan saja
+- Teks tambahan di bawah alamat, catatan transaksi, dan tulisan bawah struk bisa diubah
 - Unggah logo sendiri (otomatis hitam putih untuk kertas thermal), atur lebar logo
 - Atur ukuran kertas (58 mm, 80 mm, atau lebar lain), margin, dan karakter per baris
 - Pengaturan printer: printer sistem atau Bluetooth, baris kosong di akhir, potong kertas, cetak uji
