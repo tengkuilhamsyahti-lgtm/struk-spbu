@@ -16,12 +16,17 @@ header p{margin:2px 0 0;font-size:13px;opacity:.85}
 main{display:grid;gap:16px;padding:16px;max-width:1100px;margin:auto}
 @media(min-width:860px){main{grid-template-columns:1fr 360px;align-items:start}.preview-wrap{position:sticky;top:16px}}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card + .card{margin-top:16px}
 .card h2{font-size:14px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .grid{display:grid;gap:10px;grid-template-columns:1fr 1fr}
 .full{grid-column:1/-1}
 label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+label.check{flex-direction:row;align-items:center;gap:8px;color:var(--text)}
+label.check input{width:auto}
 input,select,textarea{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+input[type=range]{padding:0}
 textarea{resize:vertical;min-height:52px}
+.hint{font-size:12px;color:var(--muted);margin:2px 0 0}
 .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{flex:1;border:0;background:transparent;color:var(--text);padding:9px;font:inherit;cursor:pointer}
 .seg button.on{background:var(--accent);color:#fff}
@@ -29,21 +34,24 @@ textarea{resize:vertical;min-height:52px}
 .btn{border:0;border-radius:8px;padding:11px 14px;font:inherit;font-weight:600;cursor:pointer;background:var(--accent);color:#fff}
 .btn:hover{background:var(--accent-2)}
 .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+.btn.small{padding:7px 10px;font-size:13px}
 .sum{margin-top:10px;font-size:14px;color:var(--muted)}
 .sum b{color:var(--text)}
 details summary{cursor:pointer;font-weight:600;font-size:14px}
 .prices{display:grid;gap:8px;grid-template-columns:1fr 1fr;margin-top:10px}
+.logo-box{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo-thumb{width:96px;height:56px;border:1px dashed var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden;font-size:12px;color:#888}
+.logo-thumb img{max-width:100%;max-height:100%}
 .preview-wrap .card{display:flex;flex-direction:column;align-items:center;background:#e5e7eb}
 @media (prefers-color-scheme:dark){.preview-wrap .card{background:#2a3137}}
-#receipt{background:var(--paper);color:var(--ink);font:12px/1.35 "Courier New",ui-monospace,monospace;padding:10px 8px;box-shadow:0 2px 10px rgba(0,0,0,.18);white-space:pre;overflow:hidden}
-#receipt.w58{width:58mm;padding:3mm 2mm;font-size:2.75mm}
-#receipt.w80{width:80mm;padding:3mm 2mm;font-size:2.6mm}
+#receipt{background:var(--paper);color:var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.18);overflow:hidden}
+#rLogo{display:block;margin:0 auto 1.5mm;image-rendering:pixelated}
+#rText{margin:0;font-family:"Courier New",ui-monospace,monospace;line-height:1.35;white-space:pre;color:var(--ink)}
 #toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#111;color:#fff;padding:9px 14px;border-radius:8px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;max-width:90vw}
 #toast.show{opacity:1}
 .hist{font-size:13px;max-height:220px;overflow:auto}
 .hist div{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer}
 @media print{
-  @page{margin:0;size:var(--page-w,58mm) auto}
   body{background:#fff}
   header,.no-print,.form-col,#toast{display:none!important}
   main{display:block;padding:0;margin:0}
@@ -51,23 +59,24 @@ details summary{cursor:pointer;font-weight:600;font-size:14px}
   #receipt{box-shadow:none}
 }
 </style>
+<style id="pageStyle"></style>
 </head>
 <body>
 <header>
   <h1>Kasir Struk SPBU</h1>
-  <p>Isi transaksi, cek pratinjau, lalu cetak ke printer thermal 58/80 mm.</p>
+  <p>Isi transaksi, cek pratinjau, lalu cetak ke printer thermal.</p>
 </header>
 
 <main>
   <section class="form-col">
     <div class="card">
-      <h2>Data SPBU (tersimpan otomatis)</h2>
+      <h2>Data usaha (tersimpan otomatis)</h2>
       <div class="grid">
-        <label class="full">Nama SPBU<input id="sNama" value="SPBU 00.000.00"></label>
-        <label>No. SPBU<input id="sNo" value="00.000.00"></label>
+        <label class="full">Nama usaha / SPBU<input id="sNama" value="NAMA USAHA ANDA"></label>
+        <label>No. SPBU / ID<input id="sNo" placeholder="opsional"></label>
         <label>Telepon<input id="sTelp" placeholder="opsional"></label>
         <label class="full">Alamat<textarea id="sAlamat">Jl. Contoh No. 1, Kota</textarea></label>
-        <label class="full">Pesan penutup<input id="sFooter" value="Terima kasih & selamat jalan"></label>
+        <label class="full">Pesan penutup<textarea id="sFooter">Terima kasih & selamat jalan</textarea></label>
       </div>
       <details style="margin-top:12px">
         <summary>Harga BBM per liter</summary>
@@ -75,13 +84,51 @@ details summary{cursor:pointer;font-weight:600;font-size:14px}
       </details>
     </div>
 
-    <div class="card" style="margin-top:16px">
+    <div class="card">
+      <h2>Pengaturan struk & printer</h2>
+      <div class="grid">
+        <div class="full">
+          <label style="margin-bottom:6px">Logo struk</label>
+          <div class="logo-box">
+            <div class="logo-thumb" id="logoThumb">Belum ada</div>
+            <div class="btns" style="margin:0">
+              <label class="btn ghost small" style="flex-direction:row;color:var(--text)">Pilih gambar<input id="cLogoFile" type="file" accept="image/*" hidden></label>
+              <button type="button" class="btn ghost small" id="btnLogoDel">Hapus logo</button>
+            </div>
+          </div>
+          <p class="hint">PNG atau JPG dengan latar putih. Logo otomatis dijadikan hitam putih agar jelas di kertas thermal.</p>
+        </div>
+        <label>Lebar logo (%)<input id="cLogoW" type="range" min="20" max="100" step="5"></label>
+        <label>Ambang hitam<input id="cLogoTh" type="range" min="60" max="230" step="5"></label>
+        <label>Ukuran kertas<select id="cPaper"><option value="58">58 mm</option><option value="80">80 mm</option><option value="custom">Lainnya…</option></select></label>
+        <label id="lPaperW">Lebar kertas (mm)<input id="cPaperW" type="number" min="30" max="120" step="1"></label>
+        <label>Margin kiri/kanan (mm)<input id="cMargin" type="number" min="0" max="10" step="0.5"></label>
+        <label>Karakter per baris<input id="cCols" type="number" min="20" max="64" step="1" placeholder="otomatis"></label>
+        <p class="hint full">Huruf menyesuaikan lebar kertas. Makin sedikit karakter per baris, makin besar hurufnya. Kosongkan untuk otomatis (32 untuk 58 mm, 48 untuk 80 mm).</p>
+        <label>Cara cetak<select id="cMethod"><option value="system">Printer sistem (dialog cetak)</option><option value="bt">Bluetooth ESC/POS</option></select></label>
+        <label>Baris kosong di akhir<input id="cFeed" type="number" min="0" max="10" step="1"></label>
+        <label>Lebar titik printer<select id="cDots"><option value="0">Otomatis</option><option value="384">384 titik (58 mm)</option><option value="576">576 titik (80 mm)</option></select></label>
+        <label class="check" style="align-self:end"><input id="cCut" type="checkbox"> Potong kertas otomatis</label>
+        <div class="full">
+          <div class="btns" style="margin:0">
+            <button type="button" class="btn ghost small" id="btnBtForget">Ganti printer Bluetooth</button>
+            <button type="button" class="btn ghost small" id="btnTest">Cetak uji</button>
+            <button type="button" class="btn ghost small" id="btnExport">Simpan cadangan pengaturan</button>
+            <label class="btn ghost small" style="flex-direction:row;color:var(--text)">Muat cadangan<input id="cImport" type="file" accept="application/json,.json" hidden></label>
+          </div>
+          <p class="hint" id="btInfo">Printer Bluetooth: belum tersambung.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>Transaksi</h2>
       <div class="grid">
         <label>No. Transaksi<input id="tNo"></label>
-        <label>Tanggal & jam<input id="tWaktu" type="datetime-local"></label>
+        <label>Tanggal & jam<input id="tWaktu" type="datetime-local" step="1"></label>
+        <label>Shift<input id="tShift" inputmode="numeric" placeholder="opsional"></label>
         <label>No. Pompa<input id="tPompa" value="1" inputmode="numeric"></label>
-        <label>Operator<input id="tOperator" placeholder="nama operator"></label>
+        <label class="full">Operator<input id="tOperator" placeholder="nama operator"></label>
         <label>Jenis BBM<select id="tBbm"></select></label>
         <label>Harga/Liter (Rp)<input id="tHarga" inputmode="numeric"></label>
         <div class="full">
@@ -95,24 +142,22 @@ details summary{cursor:pointer;font-weight:600;font-size:14px}
         <label>Plat Nomor<input id="tPlat" placeholder="BK 1234 AB" style="text-transform:uppercase"></label>
         <label>Metode Bayar<select id="tBayar"><option>Tunai</option><option>QRIS</option><option>Debit</option><option>Kartu Kredit</option><option>Voucher</option></select></label>
         <label id="lTunai">Uang Diterima (Rp)<input id="tTunai" inputmode="numeric" placeholder="kosongkan jika pas"></label>
-        <label>Ukuran kertas<select id="tKertas"><option value="58">58 mm</option><option value="80">80 mm</option></select></label>
       </div>
       <div class="sum" id="sum"></div>
       <div class="btns">
         <button class="btn" id="btnPrint">Cetak</button>
-        <button class="btn ghost" id="btnBt">Cetak via Bluetooth</button>
         <button class="btn ghost" id="btnNew">Transaksi Baru</button>
       </div>
     </div>
 
-    <div class="card" style="margin-top:16px">
+    <div class="card">
       <h2>Riwayat (di perangkat ini)</h2>
       <div class="hist" id="hist"><span style="color:var(--muted)">Belum ada transaksi.</span></div>
     </div>
   </section>
 
   <section class="preview-wrap">
-    <div class="card"><pre id="receipt" class="w58"></pre></div>
+    <div class="card"><div id="receipt"><img id="rLogo" alt="" hidden><pre id="rText"></pre></div></div>
   </section>
 </main>
 <div id="toast"></div>
@@ -121,21 +166,132 @@ details summary{cursor:pointer;font-weight:600;font-size:14px}
 const $ = id => document.getElementById(id);
 const store = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d }catch(e){ return d } },
-  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} }
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true }catch(e){ return false } }
 };
 const DEFAULT_PRICES = { "Pertalite":10000, "Pertamax":12500, "Pertamax Turbo":13700, "Pertamina Dex":13600, "Dexlite":12900, "Biosolar":6800 };
+const DEFAULT_CFG = { logo:"", logoSrc:"", logoW:60, logoTh:160, paper:"58", paperW:58, margin:2, cols:"", method:"system", feed:3, dots:"0", cut:true };
 let prices = store.get("spbu_prices", DEFAULT_PRICES);
+let cfg = Object.assign({}, DEFAULT_CFG, store.get("spbu_cfg", {}));
+const oldPaper = store.get("spbu_paper", null);
+if (oldPaper && !store.get("spbu_cfg", null)) cfg.paper = oldPaper;
 let mode = "nominal";
 let lastLines = [];
+const logoImg = new Image();
 
 const stationFields = ["sNama","sNo","sTelp","sAlamat","sFooter"];
-const saved = store.get("spbu_station", null);
-if (saved) stationFields.forEach(f => { if (saved[f] != null) $(f).value = saved[f] });
+function loadStation(){
+  const saved = store.get("spbu_station", null);
+  if (saved) stationFields.forEach(f => { if (saved[f] != null) $(f).value = saved[f] });
+}
+loadStation();
 const opSaved = store.get("spbu_operator", "");
 if (opSaved) $("tOperator").value = opSaved;
-const paperSaved = store.get("spbu_paper", "58");
-$("tKertas").value = paperSaved;
 
+/* ---------- pengaturan ---------- */
+const cfgInputs = { cLogoW:"logoW", cLogoTh:"logoTh", cPaper:"paper", cPaperW:"paperW", cMargin:"margin", cCols:"cols", cMethod:"method", cFeed:"feed", cDots:"dots" };
+function fillCfg(){
+  for (const [id,k] of Object.entries(cfgInputs)) $(id).value = cfg[k];
+  $("cCut").checked = !!cfg.cut;
+  showLogo();
+}
+function readCfg(){
+  for (const [id,k] of Object.entries(cfgInputs)) cfg[k] = $(id).value;
+  cfg.cut = $("cCut").checked;
+  saveCfg();
+}
+function saveCfg(){ if (!store.set("spbu_cfg", cfg)) toast("Pengaturan gagal disimpan, coba logo yang lebih kecil") }
+
+const paperW = () => cfg.paper === "custom" ? (parseFloat(cfg.paperW) || 58) : parseFloat(cfg.paper);
+const cols = () => parseInt(cfg.cols,10) >= 20 ? parseInt(cfg.cols,10) : (paperW() >= 70 ? 48 : 32);
+const dots = () => parseInt(cfg.dots,10) > 0 ? parseInt(cfg.dots,10) : (paperW() >= 70 ? 576 : 384);
+
+function showLogo(){
+  if (cfg.logo){
+    logoImg.src = cfg.logo;
+    $("rLogo").src = cfg.logo; $("rLogo").hidden = false;
+    $("logoThumb").innerHTML = `<img src="${cfg.logo}" alt="logo">`;
+  } else {
+    $("rLogo").hidden = true; $("rLogo").removeAttribute("src");
+    $("logoThumb").textContent = "Belum ada";
+  }
+}
+
+// ubah gambar ke hitam putih, lebar maks 576 titik
+function processLogo(src){
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const w = Math.min(576, img.naturalWidth), h = Math.max(1, Math.round(img.naturalHeight * w / img.naturalWidth));
+      const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+      const cx = cv.getContext("2d");
+      cx.fillStyle = "#fff"; cx.fillRect(0,0,w,h); cx.drawImage(img,0,0,w,h);
+      const d = cx.getImageData(0,0,w,h), p = d.data, th = parseInt(cfg.logoTh,10) || 160;
+      for (let i = 0; i < p.length; i += 4){
+        const g = 0.299*p[i] + 0.587*p[i+1] + 0.114*p[i+2];
+        const v = g < th ? 0 : 255; p[i] = p[i+1] = p[i+2] = v; p[i+3] = 255;
+      }
+      cx.putImageData(d,0,0);
+      res(cv.toDataURL("image/png"));
+    };
+    img.onerror = () => rej(new Error("Gambar tidak bisa dibaca"));
+    img.src = src;
+  });
+}
+function resizeSource(dataUrl){
+  // simpan sumber (maks 800 px) supaya ambang bisa diubah ulang tanpa memilih file lagi
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      const w = Math.min(800, img.naturalWidth), h = Math.round(img.naturalHeight * w / img.naturalWidth);
+      const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+      const cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0,0,w,h); cx.drawImage(img,0,0,w,h);
+      res(cv.toDataURL("image/jpeg", 0.9));
+    };
+    img.onerror = () => res(dataUrl);
+    img.src = dataUrl;
+  });
+}
+$("cLogoFile").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  const fr = new FileReader();
+  fr.onload = async () => {
+    try{
+      cfg.logoSrc = await resizeSource(fr.result);
+      cfg.logo = await processLogo(cfg.logoSrc);
+      saveCfg(); showLogo(); update(); toast("Logo dipasang");
+    }catch(err){ toast(err.message) }
+  };
+  fr.readAsDataURL(f);
+  e.target.value = "";
+});
+$("btnLogoDel").onclick = () => { cfg.logo = ""; cfg.logoSrc = ""; saveCfg(); showLogo(); update() };
+let thTimer;
+$("cLogoTh").addEventListener("input", () => {
+  readCfg(); clearTimeout(thTimer);
+  thTimer = setTimeout(async () => { if (cfg.logoSrc){ cfg.logo = await processLogo(cfg.logoSrc); saveCfg(); showLogo(); update() } }, 150);
+});
+
+$("btnExport").onclick = () => {
+  const data = { app:"kasir-struk-spbu", versi:1, station:store.get("spbu_station",{}), cfg, prices };
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], {type:"application/json"}));
+  a.download = "pengaturan-struk.json"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$("cImport").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(t => {
+    const d = JSON.parse(t);
+    if (d.station) store.set("spbu_station", d.station);
+    if (d.cfg) cfg = Object.assign({}, DEFAULT_CFG, d.cfg);
+    if (d.prices) { prices = d.prices; store.set("spbu_prices", prices) }
+    saveCfg(); loadStation(); fillCfg(); renderPrices(); $("tHarga").value = prices[$("tBbm").value] || 0; update();
+    toast("Pengaturan dimuat");
+  }).catch(() => toast("File cadangan tidak valid"));
+  e.target.value = "";
+});
+
+/* ---------- harga ---------- */
 function renderPrices(){
   const sel = $("tBbm"), cur = sel.value;
   sel.innerHTML = Object.keys(prices).map(n => `<option>${n}</option>`).join("");
@@ -156,7 +312,7 @@ const dec = s => { const n = parseFloat(String(s).replace(",", ".").replace(/[^\
 const rp = n => "Rp " + Math.round(n).toLocaleString("id-ID");
 const pad2 = n => String(n).padStart(2,"0");
 
-function nowLocal(){ const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}` }
+function nowLocal(){ const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}` }
 function nextTrxNo(){
   const d = new Date(), key = `${d.getFullYear()}${pad2(d.getMonth()+1)}${pad2(d.getDate())}`;
   const c = store.get("spbu_counter", {});
@@ -192,44 +348,50 @@ const center = (s, w) => { s = s.slice(0,w); const l = Math.floor((w - s.length)
 const lr = (l, r, w) => { const sp = w - l.length - r.length; return sp >= 1 ? l + " ".repeat(sp) + r : l + "\n" + " ".repeat(Math.max(0, w - r.length)) + r };
 
 function buildLines(){
-  const w = $("tKertas").value === "80" ? 48 : 32;
+  const w = cols();
   const c = calc();
   const dt = $("tWaktu").value ? new Date($("tWaktu").value) : new Date();
   const tgl = `${pad2(dt.getDate())}/${pad2(dt.getMonth()+1)}/${dt.getFullYear()}`;
-  const jam = `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`;
+  const jam = `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}:${pad2(dt.getSeconds())}`;
   const dash = "-".repeat(w);
   const L = [];
-  wrap($("sNama").value.toUpperCase(), w).forEach(s => L.push({t:center(s,w), b:true}));
-  wrap($("sAlamat").value, w).forEach(s => L.push({t:center(s,w)}));
-  if ($("sTelp").value.trim()) L.push({t:center("Telp. " + $("sTelp").value.trim(), w)});
-  L.push({t:dash});
-  L.push({t:lr("No. SPBU", $("sNo").value, w)});
-  L.push({t:lr("No. Trans", $("tNo").value, w)});
-  L.push({t:lr("Waktu", `${tgl} ${jam}`, w)});
-  L.push({t:lr("Pompa", $("tPompa").value, w)});
-  if ($("tOperator").value.trim()) L.push({t:lr("Operator", $("tOperator").value.trim(), w)});
-  if ($("tPlat").value.trim()) L.push({t:lr("No. Plat", $("tPlat").value.trim().toUpperCase(), w)});
-  L.push({t:dash});
-  L.push({t:lr("Produk", $("tBbm").value, w)});
-  L.push({t:lr("Harga/L", rp(c.harga), w)});
-  L.push({t:lr("Volume", c.volume.toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2}) + " L", w)});
-  L.push({t:dash});
-  L.push({t:lr("TOTAL", rp(c.total), w), b:true});
-  L.push({t:lr($("tBayar").value, rp(c.tunai), w)});
-  if ($("tBayar").value === "Tunai") L.push({t:lr("Kembali", rp(c.kembali), w)});
-  L.push({t:dash});
-  wrap($("sFooter").value, w).forEach(s => L.push({t:center(s,w)}));
-  L.push({t:""});
+  const add = (t, b) => String(t).split("\n").forEach(s => L.push({t:s, b}));
+  wrap($("sNama").value.toUpperCase(), w).forEach(s => add(center(s,w), true));
+  wrap($("sAlamat").value, w).forEach(s => add(center(s,w)));
+  if ($("sTelp").value.trim()) add(center("Telp. " + $("sTelp").value.trim(), w));
+  add(dash);
+  if ($("sNo").value.trim()) add(lr("No. SPBU", $("sNo").value.trim(), w));
+  add(lr("No. Trans", $("tNo").value, w));
+  add(lr("Waktu", `${tgl} ${jam}`, w));
+  if ($("tShift").value.trim()) add(lr("Shift", $("tShift").value.trim(), w));
+  add(lr("Pompa", $("tPompa").value, w));
+  if ($("tOperator").value.trim()) add(lr("Operator", $("tOperator").value.trim(), w));
+  if ($("tPlat").value.trim()) add(lr("No. Plat", $("tPlat").value.trim().toUpperCase(), w));
+  add(dash);
+  add(lr("Produk", $("tBbm").value, w));
+  add(lr("Harga/L", rp(c.harga), w));
+  add(lr("Volume", c.volume.toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2}) + " L", w));
+  add(dash);
+  add(lr("TOTAL", rp(c.total), w), true);
+  add(lr($("tBayar").value, rp(c.tunai), w));
+  if ($("tBayar").value === "Tunai") add(lr("Kembali", rp(c.kembali), w));
+  add(dash);
+  wrap($("sFooter").value, w).forEach(s => add(center(s,w)));
   return L;
 }
 
 function update(){
-  const k = $("tKertas").value;
+  const pw = paperW(), m = Math.max(0, parseFloat(cfg.margin) || 0), w = cols();
+  const contentW = Math.max(10, pw - 2*m);
   const r = $("receipt");
-  r.className = "w" + k;
-  document.documentElement.style.setProperty("--page-w", k + "mm");
+  r.style.width = pw + "mm";
+  r.style.padding = `3mm ${m}mm`;
+  $("rText").style.fontSize = (contentW / (w * 0.6)).toFixed(3) + "mm";
+  $("rLogo").style.width = cfg.logoW + "%";
+  $("pageStyle").textContent = `@media print{@page{size:${pw}mm auto;margin:0}}`;
+  $("lPaperW").style.display = cfg.paper === "custom" ? "" : "none";
   lastLines = buildLines();
-  r.innerHTML = lastLines.map(l => {
+  $("rText").innerHTML = lastLines.map(l => {
     const esc = l.t.replace(/&/g,"&amp;").replace(/</g,"&lt;");
     return l.b ? `<b>${esc}</b>` : esc;
   }).join("\n");
@@ -238,7 +400,6 @@ function update(){
   $("lTunai").style.display = $("tBayar").value === "Tunai" ? "" : "none";
   store.set("spbu_station", Object.fromEntries(stationFields.map(f => [f, $(f).value])));
   store.set("spbu_operator", $("tOperator").value);
-  store.set("spbu_paper", k);
 }
 
 function toast(msg){ const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2600) }
@@ -248,7 +409,7 @@ function saveHistory(){
   const h = store.get("spbu_history", []);
   const no = $("tNo").value;
   const entry = { no, waktu:$("tWaktu").value, bbm:$("tBbm").value, harga:c.harga, volume:c.volume, total:c.total,
-    pompa:$("tPompa").value, plat:$("tPlat").value, bayar:$("tBayar").value, tunai:$("tTunai").value, mode,
+    shift:$("tShift").value, pompa:$("tPompa").value, plat:$("tPlat").value, bayar:$("tBayar").value, tunai:$("tTunai").value, mode,
     nominal:$("tNominal").value, vol:$("tVolume").value };
   const i = h.findIndex(x => x.no === no); if (i >= 0) h[i] = entry; else h.unshift(entry);
   store.set("spbu_history", h.slice(0, 100));
@@ -262,7 +423,7 @@ function renderHistory(){
   $("hist").querySelectorAll("div").forEach(d => d.onclick = () => {
     const x = h[d.dataset.i];
     $("tNo").value = x.no; $("tWaktu").value = x.waktu; $("tBbm").value = x.bbm; $("tHarga").value = x.harga;
-    $("tPompa").value = x.pompa; $("tPlat").value = x.plat; $("tBayar").value = x.bayar; $("tTunai").value = x.tunai || "";
+    $("tShift").value = x.shift || ""; $("tPompa").value = x.pompa; $("tPlat").value = x.plat; $("tBayar").value = x.bayar; $("tTunai").value = x.tunai || "";
     $("tNominal").value = x.nominal; $("tVolume").value = x.vol; setMode(x.mode);
     toast("Transaksi " + x.no + " dimuat, bisa dicetak ulang");
   });
@@ -282,52 +443,98 @@ function newTrx(){
 }
 
 /* ---------- Bluetooth ESC/POS (Chrome Android / desktop) ---------- */
-let btChar = null;
+let btChar = null, btDev = null;
 const BT_SERVICES = ["000018f0-0000-1000-8000-00805f9b34fb","0000ff00-0000-1000-8000-00805f9b34fb","49535343-fe7d-4ae5-8fa9-9fafd205e455","e7810a71-73ae-499d-8c15-faa9aef0c3f2"];
 async function getPrinter(){
-  if (btChar) return btChar;
-  if (!navigator.bluetooth) throw new Error("Browser ini belum mendukung Bluetooth. Pakai Chrome di Android, atau tombol Cetak biasa.");
-  const dev = await navigator.bluetooth.requestDevice({ acceptAllDevices:true, optionalServices:BT_SERVICES });
-  const server = await dev.gatt.connect();
+  if (btChar && btDev && btDev.gatt.connected) return btChar;
+  if (!navigator.bluetooth) throw new Error("Browser ini belum mendukung Bluetooth. Pakai Chrome di Android, atau pilih Printer sistem.");
+  if (!btDev) btDev = await navigator.bluetooth.requestDevice({ acceptAllDevices:true, optionalServices:BT_SERVICES });
+  const server = await btDev.gatt.connect();
   for (const s of await server.getPrimaryServices()){
     for (const ch of await s.getCharacteristics()){
-      if (ch.properties.write || ch.properties.writeWithoutResponse){ btChar = ch; dev.addEventListener("gattserverdisconnected", () => btChar = null); return ch }
+      if (ch.properties.write || ch.properties.writeWithoutResponse){
+        btChar = ch;
+        $("btInfo").textContent = "Printer Bluetooth: " + (btDev.name || "tersambung");
+        return ch;
+      }
     }
   }
   throw new Error("Printer tidak punya jalur tulis yang dikenali.");
 }
+function logoRaster(){
+  if (!cfg.logo || !logoImg.naturalWidth) return [];
+  const tw = Math.max(8, Math.floor(dots() * cfg.logoW / 100 / 8) * 8);
+  const th = Math.max(1, Math.round(logoImg.naturalHeight * tw / logoImg.naturalWidth));
+  const cv = document.createElement("canvas"); cv.width = tw; cv.height = th;
+  const cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0,0,tw,th); cx.drawImage(logoImg,0,0,tw,th);
+  const p = cx.getImageData(0,0,tw,th).data, bw = tw / 8;
+  const out = [0x1b,0x61,0x01, 0x1d,0x76,0x30,0x00, bw & 255, bw >> 8, th & 255, th >> 8];
+  for (let y = 0; y < th; y++) for (let x = 0; x < bw; x++){
+    let byte = 0;
+    for (let b = 0; b < 8; b++){ const i = (y*tw + x*8 + b) * 4; if (p[i] < 128) byte |= 0x80 >> b }
+    out.push(byte);
+  }
+  out.push(0x0a, 0x1b,0x61,0x00);
+  return out;
+}
 function escpos(lines){
-  const b = [0x1b,0x40, 0x1b,0x61,0x00];
+  const b = [0x1b,0x40, 0x1b,0x61,0x00, ...logoRaster()];
   const enc = s => Array.from(s).map(ch => { const c = ch.charCodeAt(0); return c < 128 ? c : 0x3f });
   lines.forEach(l => {
     if (l.b) b.push(0x1b,0x45,0x01);
     b.push(...enc(l.t), 0x0a);
     if (l.b) b.push(0x1b,0x45,0x00);
   });
-  b.push(0x0a,0x0a,0x0a, 0x1d,0x56,0x42,0x00);
+  for (let i = 0; i < (parseInt(cfg.feed,10) || 0); i++) b.push(0x0a);
+  if (cfg.cut) b.push(0x1d,0x56,0x42,0x00);
   return new Uint8Array(b);
 }
-async function printBt(){
-  try{
-    const ch = await getPrinter();
-    const data = escpos(lastLines);
-    for (let i = 0; i < data.length; i += 100){
-      const part = data.slice(i, i + 100);
-      if (ch.properties.writeWithoutResponse) await ch.writeValueWithoutResponse(part); else await ch.writeValue(part);
-      await new Promise(r => setTimeout(r, 20));
-    }
-    saveHistory(); toast("Struk terkirim ke printer");
-  }catch(e){ btChar = null; if (e.name !== "NotFoundError") toast(e.message || "Gagal mencetak via Bluetooth") }
+async function printBt(lines){
+  const ch = await getPrinter();
+  const data = escpos(lines);
+  for (let i = 0; i < data.length; i += 100){
+    const part = data.slice(i, i + 100);
+    if (ch.properties.writeWithoutResponse) await ch.writeValueWithoutResponse(part); else await ch.writeValue(part);
+    await new Promise(r => setTimeout(r, 20));
+  }
+}
+async function doPrint(lines, isTest){
+  if (cfg.method === "bt"){
+    try{ await printBt(lines); if (!isTest) saveHistory(); toast(isTest ? "Cetak uji terkirim" : "Struk terkirim ke printer") }
+    catch(e){ btChar = null; if (e.name !== "NotFoundError") toast(e.message || "Gagal mencetak via Bluetooth") }
+  } else {
+    if (!isTest) saveHistory();
+    window.print();
+  }
+}
+function testLines(){
+  const w = cols(), dash = "-".repeat(w);
+  return [ {t:center("CETAK UJI", w), b:true}, {t:dash}, {t:lr("Kertas", paperW() + " mm", w)}, {t:lr("Karakter/baris", String(w), w)},
+    {t:"1234567890".repeat(Math.ceil(w/10)).slice(0,w)}, {t:dash}, {t:center("Baris di atas harus pas 1 baris", w)} ];
 }
 
 /* ---------- events ---------- */
-document.querySelectorAll("input,select,textarea").forEach(el => el.addEventListener("input", update));
+document.querySelectorAll(".form-col input:not([type=file]),.form-col select,.form-col textarea").forEach(el => el.addEventListener("input", () => {
+  if (el.id in cfgInputs || el.id === "cCut") readCfg();
+  update();
+}));
+$("cCut").addEventListener("change", () => { readCfg(); update() });
 $("tBbm").addEventListener("change", () => { $("tHarga").value = prices[$("tBbm").value] || 0; update() });
 $("mode").querySelectorAll("button").forEach(b => b.onclick = () => setMode(b.dataset.m));
-$("btnPrint").onclick = () => { update(); saveHistory(); window.print() };
-$("btnBt").onclick = printBt;
+$("btnPrint").onclick = () => { update(); doPrint(lastLines, false) };
+$("btnTest").onclick = () => {
+  if (cfg.method === "bt") return doPrint(testLines(), true);
+  lastLines = testLines();
+  $("rText").innerHTML = lastLines.map(l => l.t).join("\n");
+  window.print(); update();
+};
+$("btnBtForget").onclick = () => {
+  try{ if (btDev && btDev.gatt.connected) btDev.gatt.disconnect() }catch(e){}
+  btDev = null; btChar = null; $("btInfo").textContent = "Printer Bluetooth: belum tersambung. Printer dipilih lagi saat mencetak.";
+};
 $("btnNew").onclick = newTrx;
 
+fillCfg();
 renderPrices();
 $("tHarga").value = prices[$("tBbm").value];
 renderHistory();
