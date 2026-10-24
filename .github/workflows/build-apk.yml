@@ -1,0 +1,40 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+    paths: ["android/**", ".github/workflows/build-apk.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Build APK
+        working-directory: android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+          cp app/build/outputs/apk/release/app-release.apk ../StrukSPBU.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: StrukSPBU-apk
+          path: StrukSPBU.apk
+      - name: Publish download link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete apk-terbaru --yes --cleanup-tag || true
+          gh release create apk-terbaru StrukSPBU.apk \
+            --title "Struk SPBU untuk Android (build ${{ github.run_number }})" \
+            --notes "Unduh StrukSPBU.apk di bawah, lalu pasang di HP Android. Aplikasi ini membuka Kasir Struk SPBU lewat Chrome, jadi Chrome harus terpasang."

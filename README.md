@@ -22,3 +22,18 @@ https://tengkuilhamsyahti-lgtm.github.io/struk-spbu/
 
 ## Jalankan di komputer sendiri
 Cukup buka `index.html` di browser.
+
+## Aplikasi Android (APK)
+Unduh APK terbaru: https://github.com/tengkuilhamsyahti-lgtm/struk-spbu/releases/tag/apk-terbaru
+
+APK dibangun otomatis oleh GitHub Actions setiap ada perubahan di folder `android/`.
+APK membuka aplikasi web lewat Chrome (Trusted Web Activity), jadi cetak Bluetooth dan dialog cetak tetap berfungsi.
+Perubahan tampilan cukup dilakukan di `index.html`; APK tidak perlu dibangun ulang.
+
+### Membuka di Android Studio
+1. Android Studio > File > Open, pilih folder `android/`.
+2. Tunggu Gradle sync selesai, lalu Build > Build App Bundle(s) / APK(s) > Build APK(s).
+3. Alamat web yang dibuka diatur di `android/app/build.gradle` (`webUrl`).
+
+Kunci tanda tangan `android/release.jks` (sandi `strukspbu`) disimpan di repo supaya pembaruan APK bisa dipasang di atas versi lama.
+Untuk rilis ke Play Store, buat kunci baru dan simpan sebagai secret, jangan di repo publik.
